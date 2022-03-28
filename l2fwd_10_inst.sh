@@ -5,6 +5,7 @@
 #change to proper rx_rings and recompile
 rx_rings=${1}
 bandwidth=${2}
+devs=${3}
 time=60
 [[ ! "$rx_rings" = "" ]] && sed -i "s/#define RTE_TEST_RX_DESC_DEFAULT [0-9][0-9]*/#define RTE_TEST_RX_DESC_DEFAULT ${rx_rings}/" main.c
 >&2 make
