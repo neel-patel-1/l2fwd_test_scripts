@@ -7,3 +7,5 @@ build
 *.swo
 *.swn
 low_band_*/
+*.build
+pid*
