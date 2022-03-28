@@ -1,0 +1,9 @@
+build
+*.txt
+*.data
+*.old
+*.csv
+*.swp
+*.swo
+*.swn
+low_band_*/

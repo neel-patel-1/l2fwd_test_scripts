@@ -22,11 +22,13 @@ para=$(sudo cat /proc/sys/kernel/perf_event_paranoid)
 #start background l2fwds
 back=( "" )
 
-for i in `seq 1 9`
+core=1
+for i in $devs
 do
-	>&2 ./l2fwd_inst.sh $i	> pidf
+	>&2 ./l2fwd_inst.sh $core $i > pidf
 	read -r pid < pidf
 	back+=("$pid")
+	core=$((core + 1))
 done
 
 #use last core for perf measurement
