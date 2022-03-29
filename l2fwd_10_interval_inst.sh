@@ -45,8 +45,11 @@ do
 	core=$((core + 1))
 done
 
+#sleep (let background instances run for 5 seconds before measuring)
+sleep 5
+
 #use last core for perf measurement
-perf stat -o ${rx_rings}_ring_${bandwidth}_Mbits.csv -I $(($time / 10 * 1000)) -C $core,$(($core + 20)) -e l2_lines_out.useless_hwpf,l2_lines_out.non_silent,imc/cas_count_read/,imc/cas_count_write/ -x, ./l2fwd_self_delete.sh $core ${time} ${test_dev}
+perf stat -o ${rx_rings}_ring_${bandwidth}_Mbits_$(date '+%F_%T').csv -I $(($time / 10 * 1000)) -C $core,$(($core + 20)) -e l2_lines_out.useless_hwpf,l2_lines_out.non_silent,imc/cas_count_read/,imc/cas_count_write/ -x, ./l2fwd_self_delete.sh $core ${time} ${test_dev}
 
 #kill background l2fwds
 for i in "${back[@]}"
