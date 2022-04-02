@@ -1,5 +1,5 @@
 build
-*.txt
+.txt
 *.data
 *.old
 *.csv
@@ -9,3 +9,7 @@ build
 low_band_*/
 *.build
 pid*
+constr/
+results/
+res/
+recent/
