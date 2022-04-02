@@ -4,29 +4,10 @@
 rx_rings=${1}
 bandwidth=${2}
 time=${3}
-the_log="log_$(date '+%F_%T').txt"
-touch $the_log
 
-stats="-e 'cpu/event=0x35,umask=0x11,name=PCIe_IO_HIT/u' " #PCIe write hits
-stats+="-e 'cpu/event=0x35,umask=0x21,name=PCIe_IO_MISS/u' " #PCIE write misses
+[[ ! -d "./recent" ]] && mkdir recent
 
-#stats+="-e 'uncore_cha/event=0x36,umask=0x11,name=OCCUPANCY_IO_HIT/u' " #occupancy io hit (not supported)
-#stats+="-e 'uncore_cha/event=0x36,umask=0x21,name=OCCUPANCY_IO_MISS/u' " #misses (not supported)
-stats="-e 'cpu/event=0x50,umask=0x01,name=CHA_READ_REQUESTS/u' " #CHA READ REQS
-stats+="-e 'cpu/event=0x50,umask=0x04,name=CHA_WRITE_REQUESTS/u' " #CHA WRITE REQS
-stats+="-e 'cpu/event=0x50,umask=0x10,name=CHA_INVITOE_REQUESTS/u' " #INVITO REQS
-
-stats+="-e 'cpu/config=0x304,name=MEM_READ_TRAFFIC/' " #memory read traffic
-stats+="-e 'cpu/config=0xc04,name=MEM_WRITE_TRAFFIC/' " #memory write traffic
-
-stats+="-e 'cpu/config=0x534f2e,name=LLC_REFERENCES/' " #LLC Misses
-stats+="-e 'cpu/config=0x53412e,name=LLC_MISSES/' " #LLC Misses
-stats+="-e 'cpu/config=0x532124,name=L2_DATA_MISS/' " #L2 Misses
-stats+="-e 'cpu/config=0x53c124,name=L2_DATA_HIT/' " #L2 Hits
-stats+="-e 'cpu/config=0x532224,name=L2_RFO_MISS/' " #L2 RFO misses
-stats+="-e 'cpu/config=0x53c224,name=L2_RFO_HIT/' " #L2 RFO hits
-stats+="-e l2_lines_out.silent " #l2_silent_evictions
-stats+="-e l2_lines_out.non_silent " #l2_non_silent_evictions
+#STATS
 
 
 #check hugepages
@@ -62,7 +43,6 @@ back=( "" )
 
 core=1
 
-echo "background sriovs : $back_devs" >> $the_log
 for i in $back_devs
 do
 	>&2 ./l2fwd_inst.sh $core $i > pidf
@@ -76,7 +56,7 @@ sleep 5
 
 #use last core for perf measurement
 echo "sriov under test: $test_dev" >> $the_log
-perf stat -o add_events_${rx_rings}_ring_${bandwidth}_Mbits_$(date '+%F_%T').csv -I $(($time / 10 * 1000)) -C $core,$(($core + 20)) ${stats} -x, ./l2fwd_self_delete.sh $core ${time} ${test_dev} 
+./pmu-tools/ocperf.py stat -o recent/${rx_rings}_${bandwidth} -I $(($time / 10 * 1000)) -C $core,$(($core + 20)) ${stats} -x, ./l2fwd_self_delete.sh $core ${time} ${test_dev} 
 
 #kill background l2fwds
 for i in "${back[@]}"
@@ -93,4 +73,5 @@ for i in `seq 1 10`
 do
 	sudo rm -rf /var/run/dpdk/pg$i
 done
+
 
