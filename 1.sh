@@ -37,7 +37,7 @@ for e in "${b[@]}"; do
 		genRow
 	fi
 
-	sed -i '/stats[+]?=.*/d' ${proc} #delete events
+	sed -E '/stats\+?=.*/d' ${proc} #delete events
 done
 
 #delete stats

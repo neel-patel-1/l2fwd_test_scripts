@@ -46,7 +46,7 @@ core=1
 for i in $back_devs
 do
 	#>&2 ./l2fwd_inst.sh $core $i > pidf
-	>&2 sudo rdtset -r $core -t "l3=0xc;cpu=$core" -c $core ./l2fwd_inst.sh $core $i > pidf
+	>&2 sudo rdtset -r $core -t "l3=0x8;cpu=$core" -c $core ./l2fwd_inst.sh $core $i > pidf
 	read -r pid < pidf
 	back+=("$pid")
 	core=$((core + 1))
@@ -57,6 +57,7 @@ sleep 5
 
 #use last core for perf measurement
 #./pmu-tools/ocperf.py stat -o recent/${rx_rings}_${bandwidth} -I $(($time / 10 * 1000)) -C $core,$(($core + 20)) ${stats} -x, ./l2fwd_self_delete.sh $core ${time} ${test_dev} 
+./pmu-tools/ocperf.py stat -o recent/${rx_rings}_${bandwidth} -I $(($time / 10 * 1000)) -C $core,$(($core + 20)) ${stats} -x, sudo rdtset -r $core -t "l3=0x8;cpu=$core" -c $core ./l2fwd_self_delete.sh $core ${time} ${test_dev} 
 
 #kill background l2fwds
 for i in "${back[@]}"
