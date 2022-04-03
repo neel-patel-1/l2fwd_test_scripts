@@ -8,17 +8,6 @@ time=${3}
 [[ ! -d "./recent" ]] && mkdir recent
 
 #STATS
-stats=""
-stats+="-e 'cpu/config=0x534f2e,name=PFM_LLC_REFERENCES/' " 
-stats+="-e 'cpu/config=0x53412e,name=PFM_LLC_MISSES/' " 
-stats+="-e llc_misses.pcie_write " 
-stats+="-e llc_misses.pcie_read " 
-stats+="-e UNC_CHA_TOR_INSERTS.IA_MISS " 
-stats+="-e UNC_CHA_TOR_INSERTS.IA_HIT " 
-stats+="-e UNC_M_CAS_COUNT.RD " 
-stats+="-e UNC_M_CAS_COUNT.WR " 
-stats+="-e L2_LINES_OUT.SILENT " 
-stats+="-e L2_LINES_OUT.NON_SILENT " 
 
 
 #check hugepages
@@ -67,9 +56,8 @@ done
 sleep 5
 
 #use last core for perf measurement
-echo "sriov under test: $test_dev" >> $the_log
 #./pmu-tools/ocperf.py stat -o recent/${rx_rings}_${bandwidth} -I $(($time / 10 * 1000)) -C $core,$(($core + 20)) ${stats} -x, ./l2fwd_self_delete.sh $core ${time} ${test_dev} 
-./pmu-tools/ocperf.py stat -o recent/${rx_rings}_${bandwidth} -I $(($time / 10 * 1000)) -C $core,$(($core + 20)) ${stats} -x, sudo rdtset -r $core -t "l3=0xc;cpu=$core" -c $core ./l2fwd_self_delete.sh $core ${time} ${test_dev} 
+
 #kill background l2fwds
 for i in "${back[@]}"
 do
