@@ -4,10 +4,22 @@
 rx_rings=${1}
 bandwidth=${2}
 time=${3}
+burst=${4}
 
 [[ ! -d "./recent" ]] && mkdir recent
 
 #STATS
+stats=""
+stats+="-e 'cpu/config=0x534f2e,name=PFM_LLC_REFERENCES/' " 
+stats+="-e 'cpu/config=0x53412e,name=PFM_LLC_MISSES/' " 
+stats+="-e llc_misses.pcie_write " 
+stats+="-e llc_misses.pcie_read " 
+stats+="-e UNC_CHA_TOR_INSERTS.IA_MISS " 
+stats+="-e UNC_CHA_TOR_INSERTS.IA_HIT " 
+stats+="-e UNC_M_CAS_COUNT.RD " 
+stats+="-e UNC_M_CAS_COUNT.WR " 
+stats+="-e L2_LINES_OUT.SILENT " 
+stats+="-e L2_LINES_OUT.NON_SILENT " 
 
 
 #check hugepages
@@ -27,6 +39,11 @@ fi
 
 #change to proper rx_rings and recompile
 [[ ! "$rx_rings" = "" ]] && sed -i "s/#define RTE_TEST_RX_DESC_DEFAULT [0-9][0-9]*/#define RTE_TEST_RX_DESC_DEFAULT ${rx_rings}/" main.c
+#change to proper burst size and recompile
+[[ ! "$rx_rings" = "" ]] && sed -i "s/\(#define MAX_PKT_BURST\) [0-9][0-9]*/\1 ${burst}/" main.c
+#show config
+echo "config: $(grep -e '#define MAX_PKT_BURST' -e '#define RTE_TEST_RX_DESC_DEFAULT' | sed -z 's/\n/ /')"  # print events
+exit
 >&2 make
 
 
@@ -45,8 +62,7 @@ core=1
 
 for i in $back_devs
 do
-	#>&2 ./l2fwd_inst.sh $core $i > pidf
-	>&2 sudo rdtset -r $core -t "l3=0x8;cpu=$core" -c $core ./l2fwd_inst.sh $core $i > pidf
+	>&2 ./l2fwd_inst.sh $core $i > pidf
 	read -r pid < pidf
 	back+=("$pid")
 	core=$((core + 1))
@@ -56,7 +72,8 @@ done
 sleep 5
 
 #use last core for perf measurement
-#./pmu-tools/ocperf.py stat -o recent/${rx_rings}_${bandwidth} -I $(($time / 10 * 1000)) -C $core,$(($core + 20)) ${stats} -x, ./l2fwd_self_delete.sh $core ${time} ${test_dev} 
+echo "sriov under test: $test_dev" >> $the_log
+./pmu-tools/ocperf.py stat -o recent/${rx_rings}_${bandwidth} -I $(($time / 10 * 1000)) -C $core,$(($core + 20)) ${stats} -x, ./l2fwd_self_delete.sh $core ${time} ${test_dev} 
 
 #kill background l2fwds
 for i in "${back[@]}"
@@ -73,5 +90,6 @@ for i in `seq 1 10`
 do
 	sudo rm -rf /var/run/dpdk/pg$i
 done
+
 
 

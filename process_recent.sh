@@ -1,10 +1,10 @@
 #!/bin/bash
 
-[[ "$st_file" = "" ]] && st_file=pcie.txt
+[[ "$st_file" = "" ]] && st_file=curated.txt
 
 declare -a es=( ) # for parsing out files later
-[[ "$vals" = "" ]] && declare -a vals=( "L2_LINES_OUT.NON_SILENT" "L2_LINES_OUT.SILENT" "UNC_M_CAS_COUNT.RD" "UNC_M_CAS_COUNT.WR" "llc_misses.pcie_read" "llc_misses.pcie_write" ) # values we are interested in
-declare -a rxsz=( "64" "1024" "2048" )
+[[ "$vals" = "" ]] && declare -a vals=( "L2_LINES_OUT.NON_SILENT" "L2_LINES_OUT.SILENT" "UNC_M_CAS_COUNT.RD" "UNC_M_CAS_COUNT.WR" "UNC_CHA_TOR_INSERTS.IA_HIT" "UNC_CHA_TOR_INSERTS.IA_MISS" "llc_misses.pcie_read" "llc_misses.pcie_write" "PFM_LLC_MISSES" "PFM_LLC_REFERENCES" ) # values we are interested in
+[[ "$rxsz" = "" ]] && declare -a rxsz=( "64" "1024" "2048" )
 perf_files=recent
 
 genAvgs () {

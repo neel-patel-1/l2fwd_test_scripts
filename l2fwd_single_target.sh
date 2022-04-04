@@ -11,7 +11,7 @@ time=${3}
 
 
 #check hugepages
-[ $(( $(cat /sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages) - $(cat /proc/meminfo | grep HugePages_Free | awk '{print $2}') )) -lt 100 ] && echo "less than 100 hugepages remaining... adding 100" && sudo bash -c "echo $(($(cat /sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages) + 100)) > /sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages"
+[  $(cat /proc/meminfo | grep HugePages_Free | awk '{print $2}') -lt 100 ] && echo "less than 100 hugepages remaining... adding 100" && sudo bash -c "echo $(($(cat /sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages) + 100)) > /sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages"
 
 # get sriov devices
 devs=$(sudo ibdev2netdev -v | grep -E 'mlx5_(([2-9])|([0-9][0-9]))' | awk '{print $1}')
@@ -38,32 +38,13 @@ para=$(sudo cat /proc/sys/kernel/perf_event_paranoid)
 [[ ! "$para" = "0" ]] && sudo bash -c "echo 0 > /proc/sys/kernel/perf_event_paranoid"
 
 
-#start background l2fwds
-back=( "" )
-
-core=1
-
-for i in $back_devs
-do
-	#>&2 ./l2fwd_inst.sh $core $i > pidf
-	>&2 sudo rdtset -r $core -t "l3=0x8;cpu=$core" -c $core ./l2fwd_inst.sh $core $i > pidf
-	read -r pid < pidf
-	back+=("$pid")
-	core=$((core + 1))
-done
-
 #sleep (let background instances run for 5 seconds before measuring)
 sleep 5
 
 #use last core for perf measurement
-#./pmu-tools/ocperf.py stat -o recent/${rx_rings}_${bandwidth} -I $(($time / 10 * 1000)) -C $core,$(($core + 20)) ${stats} -x, ./l2fwd_self_delete.sh $core ${time} ${test_dev} 
+core=1
+./pmu-tools/ocperf.py stat -o recent/${rx_rings}_${bandwidth} -I $(($time / 10 * 1000)) -C $core,$(($core + 20)) ${stats} -x, ./l2fwd_self_delete.sh $core ${time} ${test_dev} 
 
-#kill background l2fwds
-for i in "${back[@]}"
-do
-	>&2 echo $i
-	>&2 sudo kill -s 2 $i
-done
 
 #in case l2fwd instances are still alive
 ps aux | grep '\./build/l2fwd' | awk '{print $2}' | xargs sudo kill -s 2
@@ -73,5 +54,6 @@ for i in `seq 1 10`
 do
 	sudo rm -rf /var/run/dpdk/pg$i
 done
+
 
 
