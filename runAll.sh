@@ -15,7 +15,8 @@ runAllBurst(){
 		for j in "${burst_size[@]}"
 		do
 			#./l2fwd_10_interval_inst.sh $i $bandwidth ${time}
-			echo "2>/dev/null ./${proc} $i $band ${time} $(python -c "print(Int($i * $j))")"
+			burstsz=$(python -c "print(int($i * $j))")
+			2>/dev/null ./${proc} $i $band ${time} ${burstsz}
 		done
 	done
 
