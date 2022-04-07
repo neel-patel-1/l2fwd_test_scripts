@@ -6,7 +6,12 @@ declare -a es=( ) # for parsing out files later
 [[ "$vals" = "" ]] && declare -a vals=( "L2_LINES_OUT.NON_SILENT" "L2_LINES_OUT.SILENT" "UNC_M_CAS_COUNT.RD" "UNC_M_CAS_COUNT.WR" "UNC_CHA_TOR_INSERTS.IA_HIT" "UNC_CHA_TOR_INSERTS.IA_MISS" "llc_misses.pcie_read" "llc_misses.pcie_write" "PFM_LLC_MISSES" "PFM_LLC_REFERENCES" ) # values we are interested in
 [[ "$rx_size" = "" ]] && declare -a rx_size=( "64" "1024" "2048" )
 [[ "$burst_size" = "" ]] && declare -a burst_size=( ".25" ".50" ".75" )
-perf_files=recent
+[[ "$rdt_masks" = "" ]] && declare -a rdt_masks=( "0x400" "0x200" "0x100" "0x80" "0x40" "0x20" "0x10" "0x8" "0x4" "0x2" "0x1" )
+[[ "$perf_files" = "" ]] && export perf_files=recent
+export perf_files=recent
+
+#[[ "$band" = "" ]] && export band=8
+#[[ "$band" = "" ]] && export time=120
 
 genRowBurst() {
 	declare -a stats=()
@@ -35,6 +40,7 @@ genRowBurst() {
 	[[ -d "$resdir" ]] && cp ${band}_${time}${extr}/${band}_${time}${extr}_row.csv $resdir
 }
 
+
 genAvgs () {
 	rm -rf constr/*
 	echo "writing events to constr"
@@ -44,7 +50,7 @@ genAvgs () {
 		es+=("$prepend")
 		for file in $(ls $perf_files); do
 			grFile="$perf_files/$file"
-			append=$(echo $file | grep -Eo '([0-9_\.]*)|(idle)' | head -n 1)
+			append=$(echo $file | grep -Eo '([0-9x_\.]*)|(idle)' | head -n 1)
 			avg=$(grep --ignore-case $prepend $grFile | awk -F, 'BEGIN{ctr=0; sum=0;} {unit=$3; if(ctr>0)sum+=$2;ctr+=1} END{printf("%s%s\n", sum/ctr, unit)}')
 			echo "$avg" > constr/${prepend}_${append}
 			
@@ -79,6 +85,39 @@ genRow() {
 	echo "$( echo "${tr[*]}" | sed 's/ /,/g') " >> ${band}_${time}${extr}_row.csv
 	echo "$( echo "${sr[*]}" | sed 's/ /,/g')" >> ${band}_${time}${extr}_row.csv
 	echo "$( echo "${lr[*]}" | sed 's/ /,/g')" >> ${band}_${time}${extr}_row.csv
+	mv -f ${band}_${time}${extr}_row.csv ${band}_${time}${extr}
+	echo "rows in ${band}_${time}${extr}/${band}_${time}${extr}_row.csv"
+	[[ -d "$resdir" ]] && cp ${band}_${time}${extr}/${band}_${time}${extr}_row.csv $resdir
+}
+
+genRowSweep() {
+	declare -a stats=()
+
+	#empty file
+	echo -n "" > ${band}_${time}${extr}_row.csv
+	#top two rows
+	tr=("event")
+	sr=("rx_ring")
+	for e in "${vals[@]}"; do
+		for r in "${rx_size[@]}"; do
+			tr+=("$(echo $e | sed 's/_[0-9].*//g' )")
+			sr+=("$(echo $r)")
+		done
+	done
+	echo "$( echo "${tr[*]}" | sed 's/ /,/g') " >> ${band}_${time}${extr}_row.csv
+	echo "$( echo "${sr[*]}" | sed 's/ /,/g')" >> ${band}_${time}${extr}_row.csv
+
+	#bottom rows (ie. mask ddata)
+	for j in "${rdt_masks[@]}"; do
+		lr=("mask:${j}")
+		for e in "${vals[@]}"; do
+			for r in "${rx_size[@]}"; do
+				lr+=("$(echo $(cat ${band}_${time}${extr}/${e}_${r}_${j}_${band}))")
+			done
+		done
+		echo "$( echo "${lr[*]}" | sed 's/ /,/g')" >> ${band}_${time}${extr}_row.csv
+
+	done
 	mv -f ${band}_${time}${extr}_row.csv ${band}_${time}${extr}
 	echo "rows in ${band}_${time}${extr}/${band}_${time}${extr}_row.csv"
 	[[ -d "$resdir" ]] && cp ${band}_${time}${extr}/${band}_${time}${extr}_row.csv $resdir

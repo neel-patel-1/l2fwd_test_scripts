@@ -22,3 +22,16 @@ runAllBurst(){
 
 
 }
+
+runAllRDT(){
+	for i in "${rx_size[@]}"
+	do
+		for j in "${rdt_masks[@]}"
+		do
+			#./l2fwd_10_interval_inst.sh $i $bandwidth ${time}
+			2>/dev/null ./${proc} $i $band ${time} ${j}
+		done
+	done
+
+
+}

@@ -4,14 +4,26 @@
 rx_rings=${1}
 bandwidth=${2}
 time=${3}
+mask=${4}
 
 [[ ! -d "./recent" ]] && mkdir recent
 
 #STATS
+stats=""
+stats+="-e 'cpu/config=0x534f2e,name=PFM_LLC_REFERENCES/' " 
+stats+="-e 'cpu/config=0x53412e,name=PFM_LLC_MISSES/' " 
+stats+="-e llc_misses.pcie_write " 
+stats+="-e llc_misses.pcie_read " 
+stats+="-e UNC_CHA_TOR_INSERTS.IA_MISS " 
+stats+="-e UNC_CHA_TOR_INSERTS.IA_HIT " 
+stats+="-e UNC_M_CAS_COUNT.RD " 
+stats+="-e UNC_M_CAS_COUNT.WR " 
+stats+="-e L2_LINES_OUT.SILENT " 
+stats+="-e L2_LINES_OUT.NON_SILENT " 
 
 
 #check hugepages
-[ $(( $(cat /sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages) - $(cat /proc/meminfo | grep HugePages_Free | awk '{print $2}') )) -lt 100 ] && echo "less than 100 hugepages remaining... adding 100" && sudo bash -c "echo $(($(cat /sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages) + 100)) > /sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages"
+[  $(cat /proc/meminfo | grep HugePages_Free | awk '{print $2}') -lt 100 ] && echo "less than 100 hugepages remaining... adding 100" && sudo bash -c "echo $(($(cat /sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages) + 100)) > /sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages"
 
 # get sriov devices
 devs=$(sudo ibdev2netdev -v | grep -E 'mlx5_(([2-9])|([0-9][0-9]))' | awk '{print $1}')
@@ -46,7 +58,7 @@ core=1
 for i in $back_devs
 do
 	#>&2 ./l2fwd_inst.sh $core $i > pidf
-	>&2 sudo rdtset -r $core -t "l3=0x8;cpu=$core" -c $core ./l2fwd_inst.sh $core $i > pidf
+	>&2 sudo rdtset -r $core -t "l3=${mask};cpu=$core" -c $core ./l2fwd_inst.sh $core $i > pidf
 	read -r pid < pidf
 	back+=("$pid")
 	core=$((core + 1))
@@ -56,7 +68,8 @@ done
 sleep 5
 
 #use last core for perf measurement
-#./pmu-tools/ocperf.py stat -o recent/${rx_rings}_${bandwidth} -I $(($time / 10 * 1000)) -C $core,$(($core + 20)) ${stats} -x, ./l2fwd_self_delete.sh $core ${time} ${test_dev} 
+#./pmu-tools/ocperf.py stat -o recent/${rx_rings}_${bandwidth} -I $(($time / 10 * 1000)) -C $core,$(($core + 20)) ${stats} -x, sudo rdtset -r $core -t "l3=0x8;cpu=$core" -c $core ./l2fwd_self_delete.sh $core ${time} ${test_dev} 
+./pmu-tools/ocperf.py stat -o recent/${rx_rings}_${mask}_${bandwidth} -I $(($time / 10 * 1000)) -C $core,$(($core + 20)) ${stats} -x, sudo rdtset -r $core -t "l3=0x8;cpu=$core" -c $core ./l2fwd_self_delete.sh $core ${time} ${test_dev} 
 
 #kill background l2fwds
 for i in "${back[@]}"
