@@ -5,7 +5,7 @@ sudo mst start
 numvfs=$(sudo cat /sys/class/net/ens4f0/device/sriov_numvfs)
 echo $numvfs
 
-[[ ! "$numvfs" = "10" ]] && sudo bash -c 'echo 10 > /sys/class/net/ens4f0/device/sriov_numvfs'
+[[ ! "$numvfs" = "10" ]] && echo 10 | sudo tee /sys/class/net/ens4f0/device/sriov_numvfs 
 
 
 netdevs=$(sudo ibdev2netdev -v | grep -E 'mlx5_(([2-9])|([0-9][0-9]))' | awk '{print $12}')
@@ -20,7 +20,7 @@ fi
 
 for i in $devs; do
 	echo "unbinding $i"
-	sudo bash -c "echo $i > /sys/bus/pci/drivers/mlx5_core/unbind"
+	echo $i | sudo tee /sys/bus/pci/drivers/mlx5_core/unbind
 done
 
 for i in $netdevs; do
@@ -31,6 +31,6 @@ done
 
 for i in $devs; do
 	echo "rebinding $i"
-	sudo bash -c "echo $i > /sys/bus/pci/drivers/mlx5_core/bind"
+	echo $i | sudo tee /sys/bus/pci/drivers/mlx5_core/bind
 done
 
