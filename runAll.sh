@@ -1,6 +1,9 @@
 #!/bin/bash
 #declare -a rx_size=(  "2048" )
 
+ps aux | grep '/bin/bash \./l2fwd.*\.sh' | awk '{print $2}' | xargs sudo kill -s 2
+ps aux | grep '\./build/l2fwd' | awk '{print $2}' | xargs sudo kill -s 2
+
 runAll(){
 	for i in "${rx_size[@]}"
 	do

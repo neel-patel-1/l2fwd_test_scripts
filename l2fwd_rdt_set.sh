@@ -29,16 +29,15 @@ stats+="-e L2_LINES_OUT.NON_SILENT "
 devs=$(sudo ibdev2netdev -v | grep -E 'mlx5_(([2-9])|([0-9][0-9]))' | awk '{print $1}')
 back_devs=$(echo $devs | awk '{NF--; print}')
 test_dev=$(echo $devs | awk 'NF>1{print $NF}')
+echo "found devs $devs"
 
-if [[ "$devs" = "" ]];
-then
-	echo "finding devs"
+if [[ "$devs" = "" ]]; then
 	devs=$(lspci -D | grep Mellanox | awk '{print $1}' | grep -vE "(17.00.1|17.00.0)")
-	echo "$devs"
 fi
 
 #change to proper rx_rings and recompile
 [[ ! "$rx_rings" = "" ]] && sed -i "s/#define RTE_TEST_RX_DESC_DEFAULT [0-9][0-9]*/#define RTE_TEST_RX_DESC_DEFAULT ${rx_rings}/" main.c
+echo "config: $(grep -e '#define RTE_TEST_RX_DESC_DEFAULT' main.c | sed -z 's/\n/ /')"  # print events
 >&2 make
 
 
@@ -57,7 +56,7 @@ core=1
 
 for i in $back_devs
 do
-	#>&2 ./l2fwd_inst.sh $core $i > pidf
+	echo ">&2 ./l2fwd_inst.sh $core $i > pidf"
 	>&2 sudo rdtset -r $core -t "l3=${mask};cpu=$core" -c $core ./l2fwd_inst.sh $core $i > pidf
 	read -r pid < pidf
 	back+=("$pid")
@@ -68,8 +67,7 @@ done
 sleep 5
 
 #use last core for perf measurement
-#./pmu-tools/ocperf.py stat -o recent/${rx_rings}_${bandwidth} -I $(($time / 10 * 1000)) -C $core,$(($core + 20)) ${stats} -x, sudo rdtset -r $core -t "l3=0x8;cpu=$core" -c $core ./l2fwd_self_delete.sh $core ${time} ${test_dev} 
-./pmu-tools/ocperf.py stat -o recent/${rx_rings}_${mask}_${bandwidth} -I $(($time / 10 * 1000)) -C $core,$(($core + 20)) ${stats} -x, sudo rdtset -r $core -t "l3=0x8;cpu=$core" -c $core ./l2fwd_self_delete.sh $core ${time} ${test_dev} 
+./pmu-tools/ocperf.py stat -o recent/${rx_rings}_${mask}_${bandwidth} -I $(($time / 10 * 1000)) -C $core,$(($core + 20)) ${stats} -x, sudo rdtset -r $core -t "l3=${mask};cpu=$core" -c $core ./l2fwd_self_delete.sh $core ${time} ${test_dev} 
 
 #kill background l2fwds
 for i in "${back[@]}"

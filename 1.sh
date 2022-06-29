@@ -13,12 +13,14 @@ export sweep_proc=l2fwd_rdt_set.sh
 declare -a vals=( "L2_LINES_OUT.NON_SILENT" "L2_LINES_OUT.SILENT" "UNC_M_CAS_COUNT.RD" "UNC_M_CAS_COUNT.WR" "UNC_CHA_TOR_INSERTS.IA_HIT" "UNC_CHA_TOR_INSERTS.IA_MISS" "llc_misses.pcie_read" "llc_misses.pcie_write" "PFM_LLC_MISSES" "PFM_LLC_REFERENCES" ) # values we are interested in
 declare -a rx_size=( "64" "1024" "2048" )
 #declare -a rx_size=( "64" )
-declare -a rdt_masks=( "0x400" "0x200" "0x100" "0x80" "0x40" "0x20" "0x10" "0x8" "0x4" "0x2" "0x1" )
+declare -a rdt_masks=(  "0x80"  )
+#declare -a rdt_masks=( "0x400" "0x200" "0x100" "0x80" "0x40" "0x20" "0x10" "0x8" "0x4" "0x2" "0x1" )
 declare -a burst_size=( ".25" ".5" ".75" )
 declare -a b=( "8" "1000" "20000" )
 
 source process_recent.sh
 source runAll.sh
+echo "getting args"
 source getArgs.sh
 source remotePktgen.sh
 
@@ -43,6 +45,7 @@ for e in "${b[@]}"; do
 	#change band
 	export band=$e	
 	#configure remote pktgen
+	echo "passing scripts to remote pktgen"
 	startRemote
 
 	sed -i -E '/stats\+?=.*/d' ${proc} #delete events
@@ -72,7 +75,8 @@ for e in "${b[@]}"; do
 		genAvgs
 		genRowBurst
 	elif [[ $dosweep -eq 1 ]]; then
-		#runAllRDT
+		echo "starting rdt tests"
+		runAllRDT
 		genAvgs
 		genRowSweep
 	else
@@ -85,4 +89,4 @@ for e in "${b[@]}"; do
 done
 
 #delete stats
-sed -i '/stat.*=.*/d' ${proc}
+sed -i '/stats\+?=.*/d' ${proc}
