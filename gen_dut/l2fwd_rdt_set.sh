@@ -20,10 +20,12 @@ stats+="-e L2_LINES_OUT.NON_SILENT "
 [  $(cat /proc/meminfo | grep HugePages_Free | awk '{print $2}') -lt 100 ] && echo "less than 100 hugepages remaining... adding 100" && sudo bash -c "echo $(($(cat /sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages) + 100)) > /sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages"
 
 # get sriov devices
-devs=$(sudo ibdev2netdev -v | grep -E 'mlx5_(([2-9])|([0-9][0-9]))' | awk '{print $1}')
+devs=$(sudo ibdev2netdev -v | grep -E 'mlx5_(([2-9])|([0-9][0-9]))' | grep ens4f0 | awk '{print $1}')
 back_devs=$(echo $devs | awk '{NF--; print}')
 test_dev=$(echo $devs | awk 'NF>1{print $NF}')
-echo "found devs $devs"
+echo ${back_devs}
+echo ""
+echo ${test_dev}
 
 if [[ "$devs" = "" ]]; then
 	devs=$(lspci -D | grep Mellanox | awk '{print $1}' | grep -vE "(17.00.1|17.00.0)")
@@ -78,5 +80,4 @@ for i in `seq 1 10`
 do
 	sudo rm -rf /var/run/dpdk/pg$i
 done
-
 
