@@ -56,6 +56,7 @@ done
 sleep 5
 
 #use last core for perf measurement
+echo "./pmu-tools/ocperf.py stat -o recent/${rx_rings}_${mask}_${bandwidth} -I $(($time / 10 * 1000)) -C $core,$(($core + 20)) ${stats} -x, sudo rdtset -r $core -t \"l3=${mask};cpu=$core\" -c $core ./l2fwd_self_delete.sh $core ${time} ${test_dev}"
 ./pmu-tools/ocperf.py stat -o recent/${rx_rings}_${mask}_${bandwidth} -I $(($time / 10 * 1000)) -C $core,$(($core + 20)) ${stats} -x, sudo rdtset -r $core -t "l3=${mask};cpu=$core" -c $core ./l2fwd_self_delete.sh $core ${time} ${test_dev} 
 
 #kill background l2fwds
