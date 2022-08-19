@@ -1,0 +1,4 @@
+
+set devname in multi_sriov_test scripts (l2fwd_rdt_set.sh, l2fwd_pmutest.sh) to change the device for which NF's will be placed on SRIOV instances
+set num_backs to vary the number of background instances: total instances will be back_devs + 1 where the device for which stats will be collected is the device after the final background device in the device enumeration list (the device enumeration list used ibdev2netdev for the 
+mellanox adapter)

@@ -2,7 +2,7 @@
 #L2FWD
 
 export st_file=curated.txt
-export time=5
+export time=10
 export proc=l2fwd_testpmu.sh
 export genIP="192.168.1.1"
 
@@ -10,14 +10,14 @@ export defproc=l2fwd_testpmu.sh
 export burst_proc=l2fwd_bursty.sh
 export sweep_proc=l2fwd_rdt_set.sh
 
-declare -a vals=( "L2_LINES_OUT.NON_SILENT" "L2_LINES_OUT.SILENT" "UNC_M_CAS_COUNT.RD" "UNC_M_CAS_COUNT.WR" "UNC_CHA_TOR_INSERTS.IA_HIT" "UNC_CHA_TOR_INSERTS.IA_MISS" "llc_misses.pcie_read" "llc_misses.pcie_write" "PFM_LLC_MISSES" "PFM_LLC_REFERENCES" ) # values we are interested in
-declare -a rx_size=( "64" "1024" "2048" )
+declare -a vals=( "L2_LINES_OUT.NON_SILENT" "L2_LINES_OUT.SILENT" "UNC_M_CAS_COUNT.RD" "UNC_M_CAS_COUNT.WR"  ) # values we are interested in
+declare -a rx_size=( "64" "1024" "2048" "4096" )
 #declare -a rx_size=( "64"  )
 declare -a rdt_masks=(  "0x80"  )
 #declare -a rdt_masks=( "0x400" "0x200" "0x100" "0x80" "0x40" "0x20" "0x10" "0x8" "0x4" "0x2" "0x1" )
 declare -a burst_size=( ".25" ".5" ".75" )
 #declare -a b=( "1" "8" "25" "50" "100" "1000"  "5000" "10000" "20000" )
-declare -a b=( "5000" )
+declare -a b=( "50000" )
 #declare -a b=( "1000" )
 
 source process_recent.sh
